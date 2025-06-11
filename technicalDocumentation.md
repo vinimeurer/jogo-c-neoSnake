@@ -1,1581 +1,533 @@
-# Documentação Técnica Completa - Jogo da Cobra Avançado em C
+# Documentação Técnica - NeoSnake3
 
-## Índice
-1. [Visão Geral do Projeto](#visão-geral-do-projeto)
-2. [Arquitetura e Design](#arquitetura-e-design)
-3. [Análise Detalhada das Bibliotecas](#análise-detalhada-das-bibliotecas)
-4. [Sistema de Constantes e Configurações](#sistema-de-constantes-e-configurações)
-5. [Estruturas de Dados Detalhadas](#estruturas-de-dados-detalhadas)
-6. [Variáveis Globais e Gestão de Estado](#variáveis-globais-e-gestão-de-estado)
-7. [Análise Função por Função](#análise-função-por-função)
-8. [Fluxo de Execução Detalhado](#fluxo-de-execução-detalhado)
-9. [Sistemas Especializados](#sistemas-especializados)
-10. [Algoritmos e Lógica Complexa](#algoritmos-e-lógica-complexa)
-11. [Gestão de Memória e Performance](#gestão-de-memória-e-performance)
-12. [Tratamento de Erros e Edge Cases](#tratamento-de-erros-e-edge-cases)
-13. [Extensibilidade e Manutenção](#extensibilidade-e-manutenção)
+## Visão Geral
 
----
+O **NeoSnake3** é uma implementação avançada do clássico jogo Snake (Jogo da Cobrinha) desenvolvida em C para sistemas Windows. O jogo oferece múltiplos modos de jogo, sistema de power-ups, multiplayer local e interface gráfica baseada em console com controles avançados.
 
-## Visão Geral do Projeto
+## Arquitetura do Sistema
 
-### Contexto e Propósito
-Este projeto implementa uma versão avançada do clássico jogo Snake (Cobra) em linguagem C, desenvolvido especificamente para ambiente Windows. O jogo transcende a implementação básica tradicional, incorporando múltiplos modos de jogo, sistema de power-ups, suporte a multiplayer e mecânicas de gameplay inovadoras.
+### Bibliotecas Utilizadas
 
-### Características Técnicas Principais
-- **Linguagem**: C (padrão C99/C11)
-- **Plataforma**: Windows (específico)
-- **Paradigma**: Programação procedural com estruturas
-- **Interface**: Console/Terminal com controle direto de cursor
-- **Entrada**: Teclado com detecção de teclas em tempo real
-- **Renderização**: Baseada em caracteres ASCII no console
-
-### Objetivos de Design
-1. **Modularidade**: Código organizado em funções especializadas
-2. **Extensibilidade**: Fácil adição de novos modos e power-ups
-3. **Performance**: Execução eficiente em tempo real
-4. **Usabilidade**: Interface intuitiva e responsiva
-5. **Robustez**: Tratamento adequado de casos extremos
-
----
-
-## Arquitetura e Design
-
-### Padrão Arquitetural
-O projeto segue um padrão **Game Loop** clássico com separação clara de responsabilidades:
-
-```
-┌─────────────────┐
-│   Inicialização │
-└─────────┬───────┘
-          │
-    ┌─────▼─────┐
-    │   Setup   │
-    └─────┬─────┘
-          │
-    ┌─────▼─────┐
-    │Game Loop  │◄─────┐
-    │           │      │
-    │ ┌───────┐ │      │
-    │ │ Draw  │ │      │
-    │ └───┬───┘ │      │
-    │ ┌───▼───┐ │      │
-    │ │ Input │ │      │
-    │ └───┬───┘ │      │
-    │ ┌───▼───┐ │      │
-    │ │ Logic │ │      │
-    │ └───┬───┘ │      │
-    │ ┌───▼───┐ │      │
-    │ │ Sleep │ │      │
-    │ └───────┘ │      │
-    └─────┬─────┘      │
-          │            │
-    ┌─────▼─────┐      │
-    │Game Over? │──────┘
-    └─────┬─────┘
-          │ Sim
-    ┌─────▼─────┐
-    │  Cleanup  │
-    └───────────┘
-```
-
-### Separação de Responsabilidades
-
-#### Camada de Apresentação
-- **Renderização**: `draw()`, `drawBorder()`
-- **Interface**: `showMenu()`, `showGameModeMenu()`, `showGameOver()`
-- **Utilitários de Display**: `gotoxy()`, `clearScreen()`, `hideCursor()`
-
-#### Camada de Controle
-- **Entrada**: `input()`
-- **Lógica Principal**: `logic()`
-- **Configuração**: `setup()`, `initSnake()`
-
-#### Camada de Dados
-- **Estruturas**: `Snake`, `PowerUp`, `Coordinate`
-- **Geração**: `generateFood()`, `generatePowerUp()`
-- **Gestão de Estado**: `updatePowerUps()`, `applyPowerUpEffects()`
-
----
-
-## Análise Detalhada das Bibliotecas
-
-### stdio.h - Entrada/Saída Padrão
 ```c
-#include <stdio.h>
+#include <stdio.h>      // Entrada/saída padrão
+#include <stdlib.h>     // Funções de sistema e memória
+#include <conio.h>      // Controle de console (Windows)
+#include <windows.h>    // API Windows para manipulação de console
+#include <time.h>       // Funções de tempo
 ```
-**Funções Utilizadas:**
-- `printf()`: Formatação e exibição de texto
-- Macros de formatação para pontuações e informações
 
-**Justificativa**: Essencial para comunicação com o usuário através do console.
+### Constantes do Sistema
 
-### stdlib.h - Utilitários Padrão
 ```c
-#include <stdlib.h>
-```
-**Funções Utilizadas:**
-- `srand()`: Inicialização do gerador de números aleatórios
-- `rand()`: Geração de números pseudo-aleatórios
-- `system()`: Execução de comandos do sistema (cls)
-
-**Análise Crítica**: O uso de `system("cls")` pode ser considerado inseguro em ambientes de produção, mas é adequado para este contexto educacional.
-
-### conio.h - Console I/O (Windows)
-```c
-#include <conio.h>
-```
-**Funções Críticas:**
-- `_kbhit()`: Detecção não-bloqueante de teclas pressionadas
-- `_getch()`: Leitura de caractere sem echo
-
-**Importância**: Permite entrada de dados em tempo real sem interromper o fluxo do jogo.
-
-**Limitação**: Biblioteca não-padrão, específica para Windows.
-
-### windows.h - API Windows
-```c
-#include <windows.h>
-```
-**Funcionalidades Utilizadas:**
-- `SetConsoleCursorPosition()`: Posicionamento preciso do cursor
-- `GetStdHandle()`: Obtenção de handle do console
-- `SetConsoleCursorInfo()`: Controle de visibilidade do cursor
-- `Sleep()`: Pausa de execução para controle de frame rate
-
-**Estruturas Utilizadas:**
-- `COORD`: Coordenadas do console
-- `CONSOLE_CURSOR_INFO`: Informações do cursor
-
-### time.h - Funções de Tempo
-```c
-#include <time.h>
-```
-**Aplicações:**
-- `time()`: Timestamp atual para timers
-- `time_t`: Tipo para armazenamento de tempo
-- Controle de duração de power-ups
-- Implementação do modo tempo limitado
-
-### stdbool.h - Tipos Booleanos
-```c
-#include <stdbool.h>
-```
-**Benefícios:**
-- Código mais legível com `true`/`false`
-- Tipo `bool` explícito
-- Melhor expressão de intenções no código
-
----
-
-## Sistema de Constantes e Configurações
-
-### Constantes de Dimensionamento
-```c
-#define WIDTH 60        // Largura do campo de jogo
-#define HEIGHT 20       // Altura do campo de jogo
-#define MAX_SNAKE_LENGTH 500  // Limite teórico da cobra
+#define LARGURA 40          // Largura da área de jogo
+#define ALTURA 20           // Altura da área de jogo
+#define MAX_COBRA 100       // Tamanho máximo da cobra
+#define MAX_POWERUPS 5      // Número máximo de power-ups simultâneos
 ```
 
-**Análise de Design:**
-- `WIDTH 60`: Escolhido para caber em consoles padrão (80 colunas)
-- `HEIGHT 20`: Proporciona gameplay equilibrado
-- `MAX_SNAKE_LENGTH 500`: Limite generoso que raramente será atingido
+## Estruturas de Dados
 
-**Cálculo de Área Total:**
-```
-Área jogável = WIDTH × HEIGHT = 60 × 20 = 1200 posições
-Área total com bordas = (WIDTH+2) × (HEIGHT+2) = 62 × 22 = 1364 posições
-```
+### 1. Estrutura Posicao
 
-### Constantes de Gameplay
-```c
-#define MAX_POWERUPS 4          // Power-ups simultâneos por cobra
-#define POWERUP_DURATION 10     // Duração em segundos
-#define TIME_MODE_DURATION 60   // Duração do modo tempo
-```
-
-**Balanceamento:**
-- `MAX_POWERUPS 4`: Permite combinações interessantes sem overwhelming
-- `POWERUP_DURATION 10`: Tempo suficiente para impacto sem permanência
-- `TIME_MODE_DURATION 60`: Desafio temporal apropriado
-
-### Enumerações Implícitas
-
-#### Direções de Movimento
-```c
-#define UP 0      // ↑
-#define RIGHT 1   // →
-#define DOWN 2    // ↓
-#define LEFT 3    // ←
-```
-
-**Lógica de Oposição:**
-```c
-// Direções opostas diferem por 2
-UP (0) ↔ DOWN (2)      // |0 - 2| = 2
-RIGHT (1) ↔ LEFT (3)   // |1 - 3| = 2
-```
-
-#### Tipos de Power-ups
-```c
-#define TURBO 0         // Velocidade aumentada
-#define SLOW_MOTION 1   // Velocidade reduzida
-#define IMMUNITY 2      // Imunidade a colisões
-#define DOUBLE_POINTS 3 // Pontuação dobrada
-```
-
-**Balanceamento de Poder:**
-- **TURBO**: Vantagem de velocidade, risco de controle
-- **SLOW_MOTION**: Controle preciso, menor eficiência
-- **IMMUNITY**: Proteção absoluta, temporária
-- **DOUBLE_POINTS**: Vantagem de pontuação, sem mudança de mecânica
-
-#### Modos de Jogo
-```c
-#define TRADITIONAL 0   // Modo clássico
-#define TIME_MODE 1     // Contra o tempo
-#define INVERSE_MODE 2  // Controles invertidos
-#define MULTIPLAYER 3   // Dois jogadores
-```
-
----
-
-## Estruturas de Dados Detalhadas
-
-### Coordinate - Representação Espacial
 ```c
 typedef struct {
-    int x;  // Coordenada horizontal (0 a WIDTH+1)
-    int y;  // Coordenada vertical (0 a HEIGHT+1)
-} Coordinate;
+    int x, y;
+} Posicao;
 ```
 
-**Análise Detalhada:**
-- **Tipo**: `int` permite valores negativos para detecção de saída de bounds
-- **範囲**: x ∈ [0, WIDTH+1], y ∈ [0, HEIGHT+1]
-- **Origem**: (0,0) no canto superior esquerdo (padrão console)
-- **Uso de Memória**: 8 bytes por coordenada (2 × 4 bytes)
+**Propósito**: Representa coordenadas bidimensionais no campo de jogo.
+- `x`: Posição horizontal (0 a LARGURA-1)
+- `y`: Posição vertical (0 a ALTURA-1)
 
-**Operações Implícitas:**
-```c
-// Movimento em direções
-switch(direction) {
-    case UP:    coord.y--; break;  // Decrementa Y
-    case DOWN:  coord.y++; break;  // Incrementa Y
-    case LEFT:  coord.x--; break;  // Decrementa X
-    case RIGHT: coord.x++; break;  // Incrementa X
-}
-```
+### 2. Estrutura Cobra
 
-### PowerUp - Sistema de Melhorias Temporárias
 ```c
 typedef struct {
-    Coordinate position;  // Localização no tabuleiro
-    int type;            // Tipo específico do power-up
-    bool active;         // Estado de ativação
-    time_t endTime;      // Timestamp de expiração
+    Posicao corpo[MAX_COBRA];  // Array de segmentos do corpo
+    int tamanho;               // Tamanho atual da cobra
+    int direcao;               // Direção de movimento
+} Cobra;
+```
+
+**Propósito**: Gerencia o estado completo de uma cobra no jogo.
+
+**Campos**:
+- `corpo[]`: Array contendo todas as posições dos segmentos da cobra
+- `tamanho`: Número atual de segmentos (mínimo 3)
+- `direcao`: Direção de movimento codificada como:
+  - 0: Parada
+  - 1: Cima
+  - 2: Baixo
+  - 3: Esquerda
+  - 4: Direita
+
+### 3. Estrutura PowerUp
+
+```c
+typedef struct {
+    Posicao pos;           // Posição no campo
+    int tipo;              // Tipo do power-up
+    int ativo;             // Estado de ativação
+    int tempo_restante;    // Tempo até desaparecer
 } PowerUp;
 ```
 
-**Análise da Estrutura:**
-- **position**: Localização física no jogo (8 bytes)
-- **type**: Identificador do efeito (4 bytes)  
-- **active**: Flag de estado booleano (1 byte, alinhado para 4)
-- **endTime**: Timestamp absoluto de expiração (8 bytes)
-- **Total**: ~24 bytes por power-up
+**Propósito**: Gerencia os power-ups disponíveis no campo.
 
-**Estados do Power-up:**
-1. **Inativo**: `active = false`, aguardando ativação
-2. **Ativo**: `active = true`, `endTime` no futuro
-3. **Expirado**: `active = true`, `endTime` no passado (pendente limpeza)
+**Campos**:
+- `pos`: Localização no campo de jogo
+- `tipo`: Tipo do power-up (1-4)
+  - 1: Turbo (velocidade aumentada)
+  - 2: Slow (velocidade reduzida)
+  - 3: Imunidade (proteção contra colisões)
+  - 4: Pontos Dobro (pontuação multiplicada)
+- `ativo`: Flag indicando se está presente no campo
+- `tempo_restante`: Contador decrescente até remoção automática
 
-**Lógica de Expiração:**
-```c
-// Verificação de expiração
-if (powerUp.active && time(NULL) > powerUp.endTime) {
-    powerUp.active = false;  // Desativa power-up
-}
-```
+### 4. Estrutura EstadoJogo
 
-### Snake - Entidade Principal do Jogo
 ```c
 typedef struct {
-    Coordinate body[MAX_SNAKE_LENGTH];  // Segmentos do corpo
-    int length;                         // Comprimento atual
-    int direction;                      // Direção de movimento
-    int score;                         // Pontuação acumulada
-    bool alive;                        // Estado vital
-    PowerUp activePowerUps[MAX_POWERUPS]; // Power-ups ativos
-} Snake;
+    int pontos;                 // Pontuação atual
+    int nivel;                  // Nível baseado na pontuação
+    int tempo_jogo;             // Duração da partida
+    int tempo_inicio;           // Timestamp do início
+    int powerups_habilitados;   // Flag para ativar power-ups
+} EstadoJogo;
 ```
 
-#### Análise Detalhada dos Campos
+**Propósito**: Mantém o estado global da partida atual.
 
-**body[MAX_SNAKE_LENGTH]:**
-- **Propósito**: Array de coordenadas representando cada segmento
-- **Indexação**: `body[0]` = cabeça, `body[length-1]` = cauda
-- **Uso de Memória**: 500 × 8 bytes = 4KB por cobra
-- **Crescimento**: Novos segmentos adicionados ao final
+## Variáveis Globais
 
-**Algoritmo de Movimento:**
+### Entidades do Jogo
 ```c
-// Shift dos segmentos (cauda para cabeça)
-for (int i = length - 1; i > 0; i--) {
-    body[i] = body[i-1];  // Cada segmento assume posição do anterior
-}
-// Atualiza apenas a cabeça
-updateHead(&body[0], direction);
+Cobra cobra1, cobra2;                    // Cobras do jogador 1 e 2
+Posicao fruta;                           // Posição da fruta atual
+PowerUp powerups[MAX_POWERUPS];          // Array de power-ups ativos
+EstadoJogo jogo;                         // Estado geral do jogo
 ```
 
-**length:**
-- **Inicial**: 1 (apenas cabeça)
-- **Máximo**: 500 (limitado por MAX_SNAKE_LENGTH)
-- **Crescimento**: Incrementa ao consumir comida
-- **Uso**: Controla loops de renderização e colisão
-
-**direction:**
-- **Valores**: 0-3 (UP, RIGHT, DOWN, LEFT)
-- **Restrição**: Não pode ser oposto à direção atual
-- **Atualização**: Apenas via input do usuário
-- **Persistência**: Mantém última direção válida
-
-**score:**
-- **Inicial**: 0
-- **Incremento**: +1 por comida (ou +2 com DOUBLE_POINTS)
-- **Tipo**: `int` (suporta até ~2 bilhões)
-- **Uso**: Comparação em multiplayer, exibição final
-
-**alive:**
-- **Inicial**: `true`
-- **Falso**: Colisão detectada
-- **Uso**: Controle de game over, renderização condicional
-
-**activePowerUps[MAX_POWERUPS]:**
-- **Capacidade**: 4 power-ups simultâneos
-- **Gestão**: Array circular ou busca linear
-- **Memória**: 4 × 24 bytes = 96 bytes por cobra
-
----
-
-## Variáveis Globais e Gestão de Estado
-
-### Entidades Principais
+### Controle de Estado
 ```c
-Snake snake1, snake2;  // Duas cobras para multiplayer
+int modo_jogo = 0;          // Modo atual (0=menu, 1-4=diferentes modos)
+int jogo_ativo = 1;         // Flag de execução principal
+int pausado = 0;            // Estado de pausa
+int velocidade_base = 150;  // Velocidade base em milissegundos
 ```
-**Análise:**
-- **snake1**: Jogador principal (sempre ativo)
-- **snake2**: Segundo jogador (ativo apenas em MULTIPLAYER)
-- **Memória total**: ~8KB para ambas as cobras
-- **Inicialização**: Apenas snake1 sempre inicializada
 
-### Elementos do Jogo
+### Sistema de Power-ups
 ```c
-Coordinate food;        // Posição da comida atual
-Coordinate powerUpPos;  // Posição do power-up no tabuleiro
+int turbo_ativo = 0, turbo_tempo = 0;
+int slow_ativo = 0, slow_tempo = 0;
+int imunidade_ativa = 0, imunidade_tempo = 0;
+int pontos_dobro_ativo = 0, pontos_dobro_tempo = 0;
 ```
 
-**food:**
-- **Regeneração**: A cada consumo
-- **Algoritmo**: Posição aleatória válida
-- **Validação**: Não pode sobrepor cobras ou power-ups
+## Funções Utilitárias
 
-**powerUpPos:**
-- **Ativação**: Probabilística (20% após comer)
-- **Duração**: 20 segundos no tabuleiro
-- **Exclusividade**: Apenas um power-up por vez
+### 1. Manipulação de Console
 
-### Controle de Estado do Jogo
+#### `void limpar_tela()`
+Limpa completamente a tela do console usando o comando `system("cls")`.
+
+#### `void posicionar_cursor(int x, int y)`
+Move o cursor para uma posição específica na tela.
+- **Parâmetros**: 
+  - `x`: Coluna de destino
+  - `y`: Linha de destino
+- **Implementação**: Utiliza a API Windows `SetConsoleCursorPosition()`
+
+#### `void ocultar_cursor()`
+Torna o cursor invisível para uma apresentação mais limpa.
+- **Implementação**: Modifica `CONSOLE_CURSOR_INFO` através da API Windows
+
+## Sistema de Inicialização
+
+### 1. `void inicializar_cobra(Cobra* cobra, int x_inicial, int y_inicial)`
+
+**Propósito**: Configura o estado inicial de uma cobra.
+
+**Parâmetros**:
+- `cobra`: Ponteiro para a estrutura da cobra
+- `x_inicial`, `y_inicial`: Posição inicial da cabeça
+
+**Lógica**:
+1. Define tamanho inicial como 3 segmentos
+2. Posiciona os segmentos verticalmente a partir da posição inicial
+3. Define direção como 0 (parada)
+
+### 2. `void gerar_fruta()`
+
+**Propósito**: Cria uma nova fruta em posição aleatória válida.
+
+**Lógica**:
+1. Gera coordenadas aleatórias dentro dos limites
+2. Verifica se não coincide com a cabeça da cobra
+3. Repete até encontrar posição válida
+
+### 3. `void inicializar_powerups()`
+
+**Propósito**: Reseta todos os power-ups para estado inativo.
+
+**Implementação**:
+- Percorre array de power-ups
+- Define `ativo = 0` e `tempo_restante = 0`
+
+### 4. `void gerar_powerup()`
+
+**Propósito**: Cria novos power-ups aleatoriamente durante o jogo.
+
+**Lógica**:
+1. Verifica se power-ups estão habilitados
+2. 5% de chance por ciclo de gerar novo power-up
+3. Encontra slot vazio no array
+4. Define tipo aleatório (1-4)
+5. Define posição aleatória e tempo de vida (10 segundos)
+
+### 5. `void inicializar_jogo()`
+
+**Propósito**: Configuração completa para início de nova partida.
+
+**Sequência de Inicialização**:
+1. Inicializa gerador de números aleatórios
+2. Oculta cursor do console
+3. Inicializa cobra(s) conforme o modo
+4. Gera primeira fruta
+5. Reseta power-ups
+6. Zera pontuação e estatísticas
+7. Define timestamp de início
+8. Reseta todos os efeitos ativos
+
+## Sistema de Renderização
+
+### 1. `void desenhar_borda()`
+
+**Propósito**: Desenha os limites do campo de jogo.
+
+**Implementação**:
+- Desenha linhas horizontais superior e inferior
+- Desenha linhas verticais esquerda e direita
+- Utiliza caractere '#' como delimitador
+
+### 2. `void desenhar_cobra(Cobra* cobra, char simbolo)`
+
+**Propósito**: Renderiza uma cobra na tela.
+
+**Parâmetros**:
+- `cobra`: Ponteiro para a estrutura da cobra
+- `simbolo`: Caractere usado para o corpo
+
+**Lógica**:
+1. Percorre todos os segmentos
+2. Cabeça sempre usa '@'
+3. Corpo usa o símbolo fornecido
+4. Posiciona cursor antes de desenhar cada segmento
+
+### 3. `void desenhar_fruta()`
+
+Desenha a fruta atual na posição definida usando o caractere '*'.
+
+### 4. `void desenhar_powerups()`
+
+**Propósito**: Renderiza todos os power-ups ativos.
+
+**Símbolos**:
+- T: Turbo
+- S: Slow
+- I: Imunidade  
+- D: Pontos Dobro
+
+### 5. `void desenhar_hud()`
+
+**Propósito**: Exibe informações do jogo na lateral direita.
+
+**Informações Exibidas**:
+- Pontuação atual
+- Nível atual
+- Tempo restante (modo tempo)
+- Power-ups ativos com contadores
+- Controles disponíveis
+
+### 6. `void desenhar_tela()`
+
+**Propósito**: Função principal de renderização que coordena todos os elementos.
+
+**Sequência**:
+1. Limpa a tela
+2. Desenha borda
+3. Desenha cobra(s)
+4. Desenha fruta
+5. Desenha power-ups
+6. Desenha HUD
+
+## Sistema de Movimento e Física
+
+### 1. `void mover_cobra(Cobra* cobra)`
+
+**Propósito**: Atualiza a posição de todos os segmentos da cobra.
+
+**Algoritmo**:
+1. **Propagação do Movimento**: Cada segmento assume a posição do segmento anterior
+2. **Movimento da Cabeça**: A cabeça move-se conforme a direção atual
+3. **Direções Mapeadas**:
+   - 1 (Cima): y--
+   - 2 (Baixo): y++
+   - 3 (Esquerda): x--
+   - 4 (Direita): x++
+
+## Sistema de Detecção de Colisões
+
+### 1. `int verificar_colisao_parede(Cobra* cobra)`
+
+**Propósito**: Detecta colisão com as bordas do campo.
+
+**Condições de Colisão**:
+- x ≤ 0 ou x ≥ LARGURA-1
+- y ≤ 0 ou y ≥ ALTURA-1
+
+**Imunidade**: Retorna 0 se imunidade estiver ativa.
+
+### 2. `int verificar_colisao_corpo(Cobra* cobra)`
+
+**Propósito**: Detecta auto-colisão da cobra.
+
+**Lógica**:
+1. Compara posição da cabeça com todos os outros segmentos
+2. Retorna 1 se houver sobreposição
+3. Ignora se imunidade estiver ativa
+
+### 3. `int verificar_colisao_entre_cobras()`
+
+**Propósito**: Detecta colisões entre cobras no modo multiplayer.
+
+**Verificações**:
+1. Cabeça da cobra1 vs corpo da cobra2
+2. Cabeça da cobra2 vs corpo da cobra1
+
+**Retorno**:
+- 0: Sem colisão
+- 1: Cobra1 colidiu
+- 2: Cobra2 colidiu
+
+## Sistema de Pontuação e Progressão
+
+### 1. `void comer_fruta(Cobra* cobra)`
+
+**Propósito**: Processa o consumo de fruta pela cobra.
+
+**Efeitos**:
+1. **Crescimento**: Incrementa tamanho da cobra
+2. **Pontuação**: Adiciona 10 pontos (20 se power-up dobro ativo)
+3. **Progressão**: Calcula novo nível (pontos/100 + 1)
+4. **Regeneração**: Gera nova fruta
+
+## Sistema de Power-ups
+
+### 1. `void processar_powerup(int tipo)`
+
+**Propósito**: Ativa efeito do power-up coletado.
+
+**Efeitos por Tipo**:
+- **Tipo 1 (Turbo)**: Duplica velocidade por 5 segundos
+- **Tipo 2 (Slow)**: Reduz velocidade pela metade por 5 segundos  
+- **Tipo 3 (Imunidade)**: Anula colisões por 5 segundos
+- **Tipo 4 (Pontos Dobro)**: Duplica pontuação por 10 segundos
+
+### 2. `void atualizar_powerups()`
+
+**Propósito**: Gerencia contadores de tempo dos power-ups.
+
+**Funcionalidades**:
+1. **Power-ups no Campo**: Decrementa tempo_restante, remove se expirado
+2. **Efeitos Ativos**: Decrementa contadores, desativa quando zerado
+
+## Sistema de Controles
+
+### 1. `void processar_entrada()`
+
+**Propósito**: Captura e interpreta entrada do teclado.
+
+**Tipos de Entrada**:
+
+#### Teclas Especiais (Setas)
+- Código -32 ou 224 indica tecla especial
+- Segundo código especifica a tecla:
+  - 72: Seta Cima
+  - 80: Seta Baixo  
+  - 75: Seta Esquerda
+  - 77: Seta Direita
+
+#### Controles Gerais
+- **ESC (27)**: Retorna ao menu
+- **P**: Alterna pausa
+
+#### Modo Multiplayer
+- **WASD**: Controla cobra2
+  - W: Cima
+  - S: Baixo
+  - A: Esquerda  
+  - D: Direita
+
+#### Modo Inverso
+Inverte a direção solicitada:
+- Cima → Baixo
+- Baixo → Cima
+- Esquerda → Direita
+- Direita → Esquerda
+
+**Validação de Movimento**: Impede inversão direta (cobra não pode voltar sobre si mesma).
+
+## Sistema de Interface
+
+### 1. `void mostrar_menu_principal()`
+
+**Propósito**: Exibe menu de seleção de modo de jogo.
+
+**Opções Disponíveis**:
+1. Modo Tradicional
+2. Modo Tempo (1 minuto)
+3. Modo Inverso
+4. Modo Multiplayer Local
+5. Sair
+
+### 2. `int menu_powerups()`
+
+**Propósito**: Permite ao jogador habilitar/desabilitar power-ups.
+
+**Funcionalidade**:
+- Explica tipos de power-ups disponíveis
+- Retorna 1 para habilitado, 0 para desabilitado
+
+### 3. `void mostrar_game_over()`
+
+**Propósito**: Exibe tela final com estatísticas da partida.
+
+**Informações Mostradas**:
+- Pontuação final
+- Nível alcançado
+- Tempo de jogo (modo tempo)
+
+### 4. `void mostrar_pausa()`
+
+**Propósito**: Exibe indicador visual de jogo pausado.
+
+## Loop Principal do Jogo
+
+### 1. `void executar_jogo()`
+
+**Propósito**: Loop principal que coordena toda a lógica do jogo.
+
+**Ciclo de Execução**:
+
+#### Fase 1: Verificações Iniciais
+- Verifica fim do tempo (modo tempo)
+- Processa entrada do usuário
+- Verifica estado de pausa
+
+#### Fase 2: Atualizações de Estado
+- Atualiza power-ups (contadores e geração)
+- Move cobra(s) se estiverem em movimento
+
+#### Fase 3: Detecção de Colisões
+- Verifica colisões com parede e corpo próprio
+- Verifica colisões entre cobras (multiplayer)
+- Termina jogo se colisão detectada
+
+#### Fase 4: Interações
+- Verifica se fruta foi coletada
+- Verifica se power-up foi coletado
+- Processa efeitos correspondentes
+
+#### Fase 5: Renderização
+- Desenha estado atual do jogo
+
+#### Fase 6: Controle de Velocidade
+- Calcula velocidade baseada em nível e power-ups
+- Aplica delay correspondente usando Sleep()
+
+**Cálculo de Velocidade**:
 ```c
-int gameMode = TRADITIONAL;  // Modo de jogo atual
-bool powerUpsEnabled = false; // Habilitação de power-ups
-bool gameOver = false;       // Estado de fim de jogo
-bool exitGame = false;       // Controle de saída do programa
+int velocidade = velocidade_base - (jogo.nivel * 10);
+if (turbo_ativo) velocidade /= 2;      // Mais rápido
+if (slow_ativo) velocidade *= 2;       // Mais lento  
+if (velocidade < 50) velocidade = 50;  // Velocidade mínima
 ```
 
-**Máquina de Estados do Jogo:**
-```
-[MENU] → [PLAYING] → [GAME_OVER] → [MENU]
-   ↓
-[EXIT]
-```
-
-### Controle de Power-ups
-```c
-bool powerUpActive = false;   // Power-up presente no tabuleiro
-int powerUpType = -1;         // Tipo do power-up atual
-time_t powerUpEndTime = 0;    // Tempo de expiração do power-up
-```
-
-**Ciclo de Vida do Power-up:**
-1. **Geração**: 20% chance após comer
-2. **Ativo**: Visível no tabuleiro
-3. **Coletado**: Transferido para cobra
-4. **Expirado**: Removido após 20s ou coleta
-
-### Controle Temporal
-```c
-time_t gameModeEndTime = 0;  // Fim do modo tempo
-int baseSpeed = 100;         // Velocidade base (ms)
-```
-
-**baseSpeed:**
-- **Valor**: 100ms (10 FPS)
-- **Modificação**: Power-ups alteram temporariamente
-- **Efeitos**: 
-  - TURBO: 50ms (20 FPS)
-  - SLOW_MOTION: 200ms (5 FPS)
-
----
-
-## Análise Função por Função
-
-### main() - Ponto de Entrada Principal
-```c
-int main() {
-    srand(time(NULL));  // Inicialização aleatória
-    hideCursor();       // Oculta cursor para melhor visual
-    
-    while (!exitGame) {
-        showMenu();     // Exibe menu principal
-        if (exitGame) break;
-        
-        setup();        // Configura novo jogo
-        
-        // Game loop principal
-        while (!gameOver) {
-            draw();     // Renderiza estado atual
-            input();    // Processa entrada
-            logic();    // Atualiza lógica
-            Sleep(currentSpeed);  // Controla FPS
-        }
-        
-        showGameOver(); // Exibe resultados
-    }
-    
-    showCursor();       // Restaura cursor
-    return 0;
-}
-```
-
-**Análise de Fluxo:**
-1. **Inicialização única**: Semente aleatória, configuração de console
-2. **Loop principal**: Menu → Jogo → Resultado → Repetir
-3. **Game loop**: Ciclo render-input-logic-delay
-4. **Cleanup**: Restauração do estado original do console
-
-**Considerações de Design:**
-- **Robustez**: Sempre restaura cursor antes de sair
-- **Flexibilidade**: Permite múltiplos jogos sem reiniciar programa
-- **Performance**: Sleep() evita uso excessivo de CPU
-
-### setup() - Inicialização de Partida
-```c
-void setup() {
-    clearScreen();     // Limpa tela para novo jogo
-    gameOver = false;  // Reseta flag de fim de jogo
-    
-    // Inicializa cobra principal
-    initSnake(&snake1, WIDTH / 4, HEIGHT / 2, RIGHT);
-    
-    // Inicializa segunda cobra (multiplayer)
-    if (gameMode == MULTIPLAYER) {
-        initSnake(&snake2, 3 * WIDTH / 4, HEIGHT / 2, LEFT);
-    }
-    
-    generateFood();    // Gera primeira comida
-    
-    // Configura timer para modo tempo
-    if (gameMode == TIME_MODE) {
-        gameModeEndTime = time(NULL) + TIME_MODE_DURATION;
-    }
-}
-```
-
-**Posicionamento Inicial das Cobras:**
-- **Snake1**: (WIDTH/4, HEIGHT/2) = (15, 10), direção RIGHT
-- **Snake2**: (3*WIDTH/4, HEIGHT/2) = (45, 10), direção LEFT
-- **Estratégia**: Posições simétricas, direções opostas para evitar colisão imediata
-
-**Inicialização Condicional:**
-- **Snake2**: Apenas no modo MULTIPLAYER
-- **Timer**: Apenas no modo TIME_MODE
-- **Otimização**: Evita inicializações desnecessárias
-
-### initSnake() - Configuração Individual de Cobra
-```c
-void initSnake(Snake* snake, int startX, int startY, int direction) {
-    snake->length = 1;               // Comprimento inicial
-    snake->body[0].x = startX;       // Posição X inicial
-    snake->body[0].y = startY;       // Posição Y inicial
-    snake->direction = direction;     // Direção inicial
-    snake->score = 0;                // Pontuação zerada
-    snake->alive = true;             // Estado vivo
-    
-    // Limpa todos os power-ups
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        snake->activePowerUps[i].active = false;
-    }
-}
-```
-
-**Análise de Inicialização:**
-- **Memória**: Apenas primeiro elemento do array body é definido
-- **Estado**: Cobra começa no estado mais simples possível
-- **Power-ups**: Explicitamente desativados para evitar estados indefinidos
-- **Parâmetros**: Posição e direção configuráveis permitem diferentes starts
-
-### draw() - Sistema de Renderização Principal
-```c
-void draw() {
-    clearScreen();    // Limpa frame anterior
-    drawBorder();     // Desenha bordas do jogo
-    
-    // Renderiza comida
-    gotoxy(food.x, food.y);
-    printf("F");
-    
-    // Renderiza power-up se ativo
-    if (powerUpActive) {
-        gotoxy(powerUpPos.x, powerUpPos.y);
-        char powerUpChar = getPowerUpChar(powerUpType);
-        printf("%c", powerUpChar);
-    }
-    
-    // Renderiza cobra 1
-    renderSnake(&snake1, 'O', 'o');
-    
-    // Renderiza cobra 2 (multiplayer)
-    if (gameMode == MULTIPLAYER && snake2.alive) {
-        renderSnake(&snake2, 'X', 'x');
-    }
-    
-    // Renderiza HUD
-    renderHUD();
-}
-```
-
-**Ordem de Renderização (Z-Index):**
-1. **Fundo**: Limpeza de tela
-2. **Bordas**: Quadro do jogo
-3. **Comida**: Elemento coletável
-4. **Power-ups**: Elementos especiais
-5. **Cobras**: Entidades principais
-6. **HUD**: Informações overlay
-
-**Otimizações Possíveis:**
-- **Dirty Rectangles**: Apenas redesenhar áreas modificadas
-- **Double Buffering**: Render off-screen para evitar flicker
-- **Sprite Caching**: Pré-calcular representações
-
-### Renderização de Cobra
-```c
-void renderSnake(Snake* snake, char headChar, char bodyChar) {
-    for (int i = 0; i < snake->length; i++) {
-        gotoxy(snake->body[i].x, snake->body[i].y);
-        if (i == 0) {
-            printf("%c", headChar);  // Cabeça distinta
-        } else {
-            printf("%c", bodyChar);  // Corpo uniforme
-        }
-    }
-}
-```
-
-**Diferenciação Visual:**
-- **Snake1**: 'O' (cabeça), 'o' (corpo)
-- **Snake2**: 'X' (cabeça), 'x' (corpo)
-- **Contraste**: Facilita identificação em multiplayer
-
-### drawBorder() - Renderização de Bordas
-```c
-void drawBorder() {
-    // Bordas horizontais
-    for (int i = 0; i <= WIDTH + 1; i++) {
-        gotoxy(i, 0);              // Borda superior
-        printf("#");
-        gotoxy(i, HEIGHT + 1);     // Borda inferior
-        printf("#");
-    }
-    
-    // Bordas verticais
-    for (int i = 0; i <= HEIGHT + 1; i++) {
-        gotoxy(0, i);              // Borda esquerda
-        printf("#");
-        gotoxy(WIDTH + 1, i);      // Borda direita
-        printf("#");
-    }
-}
-```
-
-**Análise Geométrica:**
-- **Dimensões**: (WIDTH+2) × (HEIGHT+2) = 62 × 22
-- **Caracteres**: 2×62 + 2×22 - 4 = 164 caracteres '#'
-- **Sobreposição**: Cantos são desenhados duas vezes (não afeta visual)
-
-### input() - Sistema de Entrada de Dados
-```c
-void input() {
-    if (_kbhit()) {  // Verifica se há tecla pressionada
-        char key = _getch();  // Lê tecla sem echo
-        
-        // Controles Snake1 (condicionais por modo)
-        if (gameMode == INVERSE_MODE) {
-            // Controles invertidos
-            handleInverseInput(&snake1, key);
-        } else {
-            // Controles normais
-            handleNormalInput(&snake1, key);
-        }
-        
-        // Controles Snake2 (apenas multiplayer)
-        if (gameMode == MULTIPLAYER) {
-            handlePlayer2Input(&snake2, key);
-        }
-        
-        // Controles globais
-        if (key == 27) {  // ESC
-            gameOver = true;
-        }
-    }
-}
-```
-
-**Análise de Entrada:**
-- **Non-blocking**: `_kbhit()` permite execução contínua
-- **Immediate**: `_getch()` não requer Enter
-- **Condicional**: Processamento baseado no modo de jogo
-- **Hierárquica**: Controles globais têm precedência
-
-**Mapeamento de Teclas:**
-```c
-// Snake1 (Setas direcionais)
-72 (↑) → UP
-80 (↓) → DOWN  
-75 (←) → LEFT
-77 (→) → RIGHT
-
-// Snake2 (WASD)
-'w' → UP
-'s' → DOWN
-'a' → LEFT
-'d' → RIGHT
-
-// Global
-27 (ESC) → Sair do jogo
-```
-
-**Validação de Movimento:**
-```c
-// Previne movimento reverso instantâneo
-if (key == UP_KEY && currentDirection != DOWN) {
-    newDirection = UP;
-}
-```
-
-### logic() - Núcleo da Lógica do Jogo
-```c
-void logic() {
-    // 1. Atualiza movimento das cobras
-    updateSnakeMovement(&snake1);
-    if (gameMode == MULTIPLAYER && snake2.alive) {
-        updateSnakeMovement(&snake2);
-    }
-    
-    // 2. Atualiza power-ups
-    updatePowerUps(&snake1);
-    if (gameMode == MULTIPLAYER) {
-        updatePowerUps(&snake2);
-    }
-    
-    // 3. Detecta colisões
-    checkCollisions(&snake1);
-    if (gameMode == MULTIPLAYER && snake2.alive) {
-        checkCollisions(&snake2);
-    }
-    
-    // 4. Processa consumo de comida
-    processFoodConsumption();
-    
-    // 5. Gerencia power-ups no tabuleiro
-    manageBoardPowerUps();
-    
-    // 6. Verifica condições de fim de jogo
-    checkGameOverConditions();
-}
-```
-
-**Ordem de Execução Crítica:**
-1. **Movimento**: Primeiro para posições atualizadas
-2. **Power-ups**: Segundo para efeitos aplicados
-3. **Colisões**: Terceiro com posições/efeitos atuais
-4. **Consumo**: Quarto para crescimento da cobra
-5. **Gestão**: Quinto para novos power-ups
-6. **Verificação**: Último para estado final
-
-### Algoritmo de Movimento da Cobra
-```c
-void updateSnakeMovement(Snake* snake) {
-    // Shift de todos os segmentos (do fim para o início)
-    for (int i = snake->length - 1; i > 0; i--) {
-        snake->body[i] = snake->body[i-1];
-    }
-    
-    // Atualiza apenas a cabeça baseada na direção
-    switch (snake->direction) {
-        case UP:    snake->body[0].y--; break;
-        case DOWN:  snake->body[0].y++; break;
-        case LEFT:  snake->body[0].x--; break;
-        case RIGHT: snake->body[0].x++; break;
-    }
-}
-```
-
-**Complexidade Temporal:** O(n) onde n é o comprimento da cobra
-**Complexidade Espacial:** O(1) - modificação in-place
-
-**Otimização Possível:**
-```c
-// Circular buffer approach
-int head = (snake->head + 1) % MAX_SNAKE_LENGTH;
-snake->body[head] = newHeadPosition;
-snake->head = head;
-if (growing) {
-    snake->length++;
-} else {
-    snake->tail = (snake->tail + 1) % MAX_SNAKE_LENGTH;
-}
-```
-
-### Sistema de Detecção de Colisões
-```c
-void checkCollisions(Snake* snake) {
-    Coordinate head = snake->body[0];
-    
-    // 1. Colisão com bordas
-    if (head.x <= 0 || head.x >= WIDTH + 1 ||
-        head.y <= 0 || head.y >= HEIGHT + 1) {
-        snake->alive = false;
-        return;
-    }
-    
-    // 2. Auto-colisão (se não imune)
-    if (!hasImmunity(snake)) {
-        for (int i = 1; i < snake->length; i++) {
-            if (head.x == snake->body[i].x && 
-                head.y == snake->body[i].y) {
-                snake->alive = false;
-                return;
-            }
-        }
-    }
-    
-    // 3. Colisão com outra cobra (multiplayer)
-    if (gameMode == MULTIPLAYER) {
-        Snake* other = (snake == &snake1) ? &snake2 : &snake1;
-        if (other->alive && !hasImmunity(snake)) {
-            for (int i = 0; i < other->length; i++) {
-                if (head.x == other->body[i].x && 
-                    head.y == other->body[i].y) {
-                    snake->alive = false;
-                    return;
-                }
-            }
-        }
-    }
-}
-```
-
-**Análise de Performance:**
-- **Auto-colisão**: O(n) onde n é o comprimento da cobra
-- **Colisão entre cobras**: O(n×m) onde n e m são os comprimentos das cobras
-- **Otimização**: Spatial hashing poderia reduzir para O(1) em casos médios
-
-**Casos Extremos:**
-- **Cobra de comprimento 1**: Não há auto-colisão possível
-- **Cobras de comprimento máximo**: 500×500 = 250.000 comparações por frame
-- **Imunidade ativa**: Pula verificações de colisão, mantendo apenas detecção de bordas
-
-### generateFood() - Geração Inteligente de Comida
-```c
-void generateFood() {
-    bool validPosition;
-    do {
-        validPosition = true;
-        food.x = 1 + rand() % WIDTH;   // Range: [1, WIDTH]
-        food.y = 1 + rand() % HEIGHT;  // Range: [1, HEIGHT]
-        
-        // Validação contra cobra 1
-        for (int i = 0; i < snake1.length; i++) {
-            if (food.x == snake1.body[i].x && food.y == snake1.body[i].y) {
-                validPosition = false;
-                break;
-            }
-        }
-        
-        // Validação contra cobra 2 (multiplayer)
-        if (validPosition && gameMode == MULTIPLAYER) {
-            for (int i = 0; i < snake2.length; i++) {
-                if (food.x == snake2.body[i].x && food.y == snake2.body[i].y) {
-                    validPosition = false;
-                    break;
-                }
-            }
-        }
-        
-        // Validação contra power-up ativo
-        if (validPosition && powerUpActive) {
-            if (food.x == powerUpPos.x && food.y == powerUpPos.y) {
-                validPosition = false;
-            }
-        }
-    } while (!validPosition);
-}
-```
-
-**Análise Algorítmica:**
-- **Complexidade Média**: O(k×n) onde k é número de tentativas e n é comprimento total das cobras
-- **Complexidade Pior Caso**: Infinita (teoricamente) se não há posições válidas
-- **Probabilidade de Sucesso**: (Área Total - Área Ocupada) / Área Total
-
-**Cálculo de Probabilidade:**
-```
-Área Total = WIDTH × HEIGHT = 60 × 20 = 1200
-Área Ocupada Máxima = 2 × MAX_SNAKE_LENGTH + 1 (power-up) = 1001
-Probabilidade Mínima = (1200 - 1001) / 1200 = 16.6%
-```
-
-**Otimizações Possíveis:**
-1. **Lista de Posições Livres**: Manter array de posições disponíveis
-2. **Rejection Sampling Limitado**: Máximo de tentativas antes de usar busca exaustiva
-3. **Spatial Partitioning**: Dividir área em regiões para busca mais eficiente
-
-### generatePowerUp() - Sistema de Power-ups no Tabuleiro
-```c
-void generatePowerUp() {
-    bool validPosition;
-    do {
-        validPosition = true;
-        powerUpPos.x = 1 + rand() % WIDTH;
-        powerUpPos.y = 1 + rand() % HEIGHT;
-        
-        // Mesmo algoritmo de validação que generateFood()
-        // ... código de validação ...
-    } while (!validPosition);
-    
-    powerUpType = rand() % 4;  // 0-3 (TURBO, SLOW_MOTION, IMMUNITY, DOUBLE_POINTS)
-    powerUpActive = true;
-    powerUpEndTime = time(NULL) + 20;  // Expira em 20 segundos
-}
-```
-
-**Distribuição de Power-ups:**
-- **TURBO (0)**: 25% de probabilidade
-- **SLOW_MOTION (1)**: 25% de probabilidade  
-- **IMMUNITY (2)**: 25% de probabilidade
-- **DOUBLE_POINTS (3)**: 25% de probabilidade
-
-**Ciclo de Vida Temporal:**
-```
-Geração → Ativo (20s) → Expiração/Coleta
-    ↓         ↓              ↓
-Aparece   Visível        Desaparece
-```
-
-### updatePowerUps() - Gerenciamento de Estado dos Power-ups
-```c
-void updatePowerUps(Snake* snake) {
-    // 1. Gerencia power-up no tabuleiro
-    if (powerUpActive && time(NULL) > powerUpEndTime) {
-        powerUpActive = false;
-    }
-    
-    // 2. Atualiza power-ups ativos na cobra
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (snake->activePowerUps[i].active && 
-            time(NULL) > snake->activePowerUps[i].endTime) {
-            snake->activePowerUps[i].active = false;
-        }
-    }
-    
-    // 3. Aplica efeitos dos power-ups ativos
-    applyPowerUpEffects(snake);
-}
-```
-
-**Responsabilidades Múltiplas:**
-1. **Limpeza Temporal**: Remove power-ups expirados
-2. **Estado Ativo**: Mantém consistência de estados
-3. **Aplicação de Efeitos**: Chama sistema de efeitos
-
-**Análise de Performance:**
-- **Complexidade**: O(MAX_POWERUPS) = O(4) = O(1)
-- **Chamadas por Frame**: 1 por cobra ativa
-- **Operações de Tempo**: Múltiplas chamadas `time(NULL)`
-
-### applyPowerUpEffects() - Sistema de Efeitos Temporários
-```c
-void applyPowerUpEffects(Snake* snake) {
-    int speed = baseSpeed;  // 100ms base
-    
-    // Aplica modificadores de velocidade
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (snake->activePowerUps[i].active) {
-            switch (snake->activePowerUps[i].type) {
-                case TURBO:
-                    speed /= 2;  // 50ms (20 FPS)
-                    break;
-                case SLOW_MOTION:
-                    speed *= 2;  // 200ms (5 FPS)
-                    break;
-                // IMMUNITY e DOUBLE_POINTS são aplicados contextualmente
-            }
-        }
-    }
-    
-    baseSpeed = speed;  // Atualiza velocidade global
-}
-```
-
-**Problemas de Design Identificados:**
-1. **Efeito Global**: `baseSpeed` afeta ambas as cobras em multiplayer
-2. **Acumulação de Efeitos**: Múltiplos TURBO podem causar divisão excessiva
-3. **Aplicação Assimétrica**: IMMUNITY/DOUBLE_POINTS verificados em outros locais
-
-**Sistema de Efeitos Corrigido (Proposta):**
-```c
-int calculateSnakeSpeed(Snake* snake) {
-    int speed = 100;  // Base local
-    int turboCount = 0, slowCount = 0;
-    
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (snake->activePowerUps[i].active) {
-            switch (snake->activePowerUps[i].type) {
-                case TURBO: turboCount++; break;
-                case SLOW_MOTION: slowCount++; break;
-            }
-        }
-    }
-    
-    // Net effect calculation
-    int netEffect = turboCount - slowCount;
-    if (netEffect > 0) {
-        speed /= (1 + netEffect);  // Faster
-    } else if (netEffect < 0) {
-        speed *= (1 - netEffect);  // Slower
-    }
-    
-    return max(25, min(400, speed));  // Clamping
-}
-```
-
----
-
-## Sistemas Especializados
-
-### Sistema de Menus Hierárquicos
-
-#### showMenu() - Menu Principal
-```c
-void showMenu() {
-    clearScreen();
-    
-    // Título centralizado
-    gotoxy(WIDTH / 2 - 10, 5);
-    printf("===== JOGO DA COBRA =====");
-    
-    // Opções numeradas
-    gotoxy(WIDTH / 2 - 10, 7);  printf("1. Iniciar Jogo");
-    gotoxy(WIDTH / 2 - 10, 8);  printf("2. Selecionar Modo de Jogo");
-    gotoxy(WIDTH / 2 - 10, 9);  printf("3. Ativar/Desativar Power-ups (Atual: %s)", 
-                                       powerUpsEnabled ? "ATIVO" : "DESATIVADO");
-    gotoxy(WIDTH / 2 - 10, 10); printf("4. Sair");
-    
-    // Estado atual
-    gotoxy(WIDTH / 2 - 10, 11);
-    printf("Modo atual: %s", getModeString(gameMode));
-    
-    // Prompt de entrada
-    gotoxy(WIDTH / 2 - 10, 13);
-    printf("Digite sua escolha: ");
-    
-    // Loop de entrada com validação
-    char choice;
-    do {
-        choice = _getch();
-        switch (choice) {
-            case '1': return;  // Inicia jogo
-            case '2': showGameModeMenu(); return showMenu();  // Submenu
-            case '3': powerUpsEnabled = !powerUpsEnabled; return showMenu();  // Toggle
-            case '4': exitGame = true; return;  // Sair
-        }
-    } while (true);
-}
-```
-
-**Análise de UX:**
-- **Centralização**: Cálculos baseados em WIDTH para responsividade
-- **Estado Dinâmico**: Exibe configurações atuais
-- **Navegação Recursiva**: `return showMenu()` para refresh após mudanças
-- **Validação de Entrada**: Loop infinito até entrada válida
-
-#### showGameModeMenu() - Submenu de Modos
-```c
-void showGameModeMenu() {
-    // Layout similar ao menu principal
-    // 5 opções: 4 modos + voltar
-    
-    char choice;
-    do {
-        choice = _getch();
-        switch (choice) {
-            case '1': gameMode = TRADITIONAL; return;
-            case '2': gameMode = TIME_MODE; return;
-            case '3': gameMode = INVERSE_MODE; return;
-            case '4': gameMode = MULTIPLAYER; return;
-            case '5': return;  // Volta ao menu principal
-        }
-    } while (true);
-}
-```
-
-**Padrão de Navegação:**
-```
-Menu Principal
-    ├── 1. Iniciar Jogo → Game Loop
-    ├── 2. Modos de Jogo → Submenu
-    │   ├── 1-4. Seleção → Volta ao Principal
-    │   └── 5. Voltar → Volta ao Principal
-    ├── 3. Toggle Power-ups → Refresh Principal
-    └── 4. Sair → Termina Programa
-```
-
-### Sistema de Exibição de Resultados
-
-#### showGameOver() - Tela de Fim de Jogo
-```c
-void showGameOver() {
-    clearScreen();
-    
-    // Título
-    gotoxy(WIDTH / 2 - 10, HEIGHT / 2 - 2);
-    printf("===== FIM DE JOGO =====");
-    
-    // Pontuação principal
-    gotoxy(WIDTH / 2 - 10, HEIGHT / 2);
-    printf("Pontuação Jogador 1: %d", snake1.score);
-    
-    // Multiplayer específico
-    if (gameMode == MULTIPLAYER) {
-        gotoxy(WIDTH / 2 - 10, HEIGHT / 2 + 1);
-        printf("Pontuação Jogador 2: %d", snake2.score);
-        
-        // Determinação de vencedor
-        gotoxy(WIDTH / 2 - 10, HEIGHT / 2 + 3);
-        if (snake1.score > snake2.score) {
-            printf("Jogador 1 venceu!");
-        } else if (snake2.score > snake1.score) {
-            printf("Jogador 2 venceu!");
-        } else {
-            printf("Empate!");
-        }
-    }
-    
-    // Prompt de continuação
-    gotoxy(WIDTH / 2 - 15, HEIGHT / 2 + 5);
-    printf("Pressione qualquer tecla para voltar ao menu...");
-    
-    _getch();  // Blocking wait
-}
-```
-
-**Lógica de Vitória:**
-1. **Single Player**: Sempre exibe pontuação do Jogador 1
-2. **Multiplayer**: Compara pontuações e declara vencedor
-3. **Empate**: Tratado explicitamente
-4. **Modo Tempo**: Vencedor por pontuação no tempo limite
-
----
-
-## Algoritmos e Lógica Complexa
-
-### Algoritmo de Movimento da Cobra (Análise Detalhada)
-
-#### Movimento Base
-```c
-// Shift Algorithm - O(n)
-for (int i = snake1.length - 1; i > 0; i--) {
-    snake1.body[i] = snake1.body[i-1];
-}
-
-// Head Update - O(1)
-switch (snake1.direction) {
-    case UP:    snake1.body[0].y--; break;
-    case DOWN:  snake1.body[0].y++; break;
-    case LEFT:  snake1.body[0].x--; break;
-    case RIGHT: snake1.body[0].x++; break;
-}
-```
-
-**Análise Matemática:**
-- **Operações por Movimento**: n-1 cópias + 1 atualização = n operações
-- **Bytes Transferidos**: (n-1) × 8 bytes por movimento
-- **Frequência**: 10-20 vezes por segundo dependendo da velocidade
-
-**Alternativa Otimizada - Circular Buffer:**
-```c
-typedef struct {
-    Coordinate body[MAX_SNAKE_LENGTH];
-    int head;    // Índice da cabeça
-    int tail;    // Índice da cauda
-    int length;  // Comprimento atual
-} OptimizedSnake;
-
-void moveSnake(OptimizedSnake* snake, int direction) {
-    // Calcula nova posição da cabeça
-    int newHead = (snake->head + 1) % MAX_SNAKE_LENGTH;
-    snake->body[newHead] = snake->body[snake->head];
-    
-    // Atualiza posição baseada na direção
-    updatePosition(&snake->body[newHead], direction);
-    
-    // Atualiza índices
-    snake->head = newHead;
-    if (snake->length < MAX_SNAKE_LENGTH) {
-        snake->length++;
-    } else {
-        snake->tail = (snake->tail + 1) % MAX_SNAKE_LENGTH;
-    }
-}
-```
-
-**Vantagens do Circular Buffer:**
-- **Complexidade**: O(1) vs O(n)
-- **Performance**: Constante independente do tamanho
-- **Memória**: Sem operações de cópia desnecessárias
-
-### Algoritmo de Validação de Posições
-
-#### Geração com Rejection Sampling
-```c
-void generateValidPosition(Coordinate* pos, bool (*validator)(Coordinate)) {
-    int attempts = 0;
-    const int MAX_ATTEMPTS = 1000;
-    
-    do {
-        pos->x = 1 + rand() % WIDTH;
-        pos->y = 1 + rand() % HEIGHT;
-        attempts++;
-        
-        if (attempts > MAX_ATTEMPTS) {
-            // Fallback: busca exaustiva
-            findFirstValidPosition(pos, validator);
-            return;
-        }
-    } while (!validator(*pos));
-}
-
-bool isValidFoodPosition(Coordinate pos) {
-    // Verifica contra todas as entidades
-    return !occupiedBySnake(pos) && 
-           !occupiedByPowerUp(pos) && 
-           !occupiedByBorder(pos);
-}
-```
-
-**Análise Estatística:**
-- **Tentativas Esperadas**: 1 / P(sucesso)
-- **Caso Médio**: ~1.2 tentativas (quando 83% do espaço está livre)
-- **Caso Extremo**: 1000 tentativas → busca exaustiva
-
-### Sistema de Detecção de Colisões Otimizado
-
-#### Spatial Hashing (Proposta)
-```c
-#define GRID_SIZE 10
-#define GRID_WIDTH (WIDTH / GRID_SIZE + 1)
-#define GRID_HEIGHT (HEIGHT / GRID_SIZE + 1)
-
-typedef struct {
-    int entities[GRID_WIDTH][GRID_HEIGHT][10];  // Máximo 10 entidades por célula
-    int count[GRID_WIDTH][GRID_HEIGHT];
-} SpatialGrid;
-
-int getGridX(int x) { return x / GRID_SIZE; }
-int getGridY(int y) { return y / GRID_SIZE; }
-
-bool checkCollisionOptimized(Coordinate pos, SpatialGrid* grid) {
-    int gx = getGridX(pos.x);
-    int gy = getGridY(pos.y);
-    
-    // Verifica apenas células adjacentes (3x3)
-    for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            int cgx = gx + dx;
-            int cgy = gy + dy;
-            
-            if (cgx >= 0 && cgx < GRID_WIDTH && 
-                cgy >= 0 && cgy < GRID_HEIGHT) {
-                // Verifica entidades na célula
-                for (int i = 0; i < grid->count[cgx][cgy]; i++) {
-                    if (grid->entities[cgx][cgy][i] == positionToId(pos)) {
-                        return true;  // Colisão detectada
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-```
-
-**Vantagens do Spatial Hashing:**
-- **Complexidade**: O(1) amortizada vs O(n)
-- **Escalabilidade**: Performance constante mesmo com cobras grandes
-- **Flexibilidade**: Suporta múltiplas entidades facilmente
-
----
-
-## Gestão de Memória e Performance
-
-### Análise de Uso de Memória
-
-#### Estruturas Principais
-```c
-// Snake structure analysis
-sizeof(Snake) = 
-    sizeof(Coordinate) * MAX_SNAKE_LENGTH +  // 8 * 500 = 4000 bytes
-    sizeof(int) * 4 +                        // 16 bytes (length, direction, score, alive)
-    sizeof(PowerUp) * MAX_POWERUPS           // 24 * 4 = 96 bytes
-    = 4112 bytes per snake
-
-// Global memory usage
-Snake snake1, snake2;                        // 8224 bytes
-Coordinate food, powerUpPos;                 // 16 bytes  
-Various int/bool globals;                    // ~50 bytes
-Total static memory: ~8.3 KB
-```
-
-#### Stack vs Heap Usage
-```
-Stack Memory:
-- Variáveis locais nas funções: ~100 bytes por chamada
-- Call stack depth: ~5 níveis máximo
-- Total stack usage: <1 KB
-
-Heap Memory: 
-- Nenhuma alocação dinâmica (malloc/calloc)
-- Tudo em memória estática/stack
-
-Total RAM footprint: <10 KB
-```
-
-### Análise de Performance por Frame
-
-#### Operações por Frame (60x20 = 1200 posições)
-```c
-// Render phase - O(n + m + c)
-clearScreen();          // ~1ms (system call)
-drawBorder();           // 164 printf calls
-draw();                 // n + m + 2 printf calls (n,m = snake lengths)
-
-// Input phase - O(1)
-input();                // 1 system call if key pressed
-
-// Logic phase - O(n² + m²) worst case
-logic();                // Movement: O(n + m)
-                        // Collision: O(n² + m² + nm) worst case
-                        // Food/PowerUp: O(n + m)
-
-Total time per frame: 100-200ms (controlled by Sleep())
-```
-
-#### Bottlenecks Identificados
-1. **clearScreen()**: System call custosa
-2. **Collision Detection**: O(n²) para cobras grandes
-3. **Console Output**: Múltiplas chamadas printf()
-4. **Validação de Posições**: Pode ter muitas tentativas
-
-#### Otimizações Implementáveis
-
-**1. Double Buffering**
-```c
-char screenBuffer[HEIGHT+2][WIDTH+3];
-
-void renderToBuffer() {
-    // Renderiza para buffer em memória
-    memset(screenBuffer, ' ', sizeof(screenBuffer));
-    
-    // Render entities to buffer
-    screenBuffer[food.y][food.x] = 'F';
-    for (int i = 0; i < snake1.length; i++) {
-        screenBuffer[snake1.body[i].y][snake1.body[i].x] = (i == 0) ? 'O' : 'o';
-    }
-}
-
-void displayBuffer() {
-    gotoxy(0, 0);
-    for (int y = 0; y < HEIGHT+2; y++) {
-        printf("%.*s\n", WIDTH+2, screenBuffer[y]);
-    }
-}
-```
-
-**2. Dirty Rectangle System**
-```c
-typedef struct {
-    int minX, minY, maxX, maxY;
-    bool dirty;
-} DirtyRegion;
-
-void markDirty(int x, int y) {
-    if (!dirtyRegion.dirty) {
-        dirtyRegion.minX = dirtyRegion.maxX = x;
-        dirtyRegion.minY = dirtyRegion.maxY = y;
-        dirtyRegion.dirty = true;
-    } else {
-        dirtyRegion.minX = min(dirtyRegion.minX, x);
-        dirtyRegion.maxX = max(dirtyRegion.maxX, x);
-        dirtyRegion.minY = min(dirtyRegion.minY, y);
-        dirtyRegion.maxY = max(dirtyRegion.maxY, y);
-    }
-}
-```
-
----
-
-## Tratamento de Erros e Edge Cases
-
-### Casos Extremos Identificados
-
-#### 1. Overflow de Pontuação
-```c
-// Problema atual
-snake->score += 1;  // int pode overflow em ~2 bilhões
-
-// Solução
-void addScore(Snake* snake, int points) {
-    if (snake->score > INT_MAX - points) {
-        snake->score = INT_MAX;  // Clamp to maximum
-    } else {
-        snake->score += points;
-    }
-}
-```
-
-#### 2. Cobra de Comprimento Máximo
-```c
-// Problema: Array bounds
-if (snake->length >= MAX_SNAKE_LENGTH) {
-    // Não pode crescer mais - comportamento indefinido
-}
-
-// Solução: Verificação preventiva
-void growSnake(Snake* snake) {
-    if (snake->length < MAX_SNAKE_LENGTH) {
-        snake->length++;
-    } else {
-        // Win condition ou special behavior
-        triggerMaxLengthEvent(snake);
-    }
-}
-```
-
-#### 3. Múltiplos Power-ups do Mesmo Tipo
-```c
-// Problema: Efeitos podem se acumular incorretamente
-// TURBO + TURBO = speed / 4 (muito rápido)
-
-// Solução: Stack de efeitos
-int calculateSpeedModifier(Snake* snake) {
-    int turboCount = 0, slowCount = 0;
-    
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (snake->activePowerUps[i].active) {
-            switch (snake->activePowerUps[i].type) {
-                case TURBO: turboCount++; break;
-                case SLOW_MOTION: slowCount++; break;
-            }
-        }
-    }
-    
-    int netEffect = turboCount - slowCount;
-    return clamp(50, 400, baseSpeed * pow(2, -netEffect));
-}
-```
-
-#### 4. Console Resize/Invalid State
-```c
-// Problema: Console redimensionado durante execução
-// Solução: Verificação de dimensões
-bool validateConsoleSize() {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    
-    int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    int consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-    
-    return (consoleWidth >= WIDTH + 2) && (consoleHeight >= HEIGHT + 8);
-}
-```
-
-### Sistema de Validação Robusto
-
-#### Validação de Estados
-```c
-bool validateGameState() {
-    // Verifica integridade das cobras
-    if (snake1.length < 1 || snake1.length > MAX_SNAKE_LENGTH) return false;
-    if (gameMode == MULTIPLAYER && snake2.length < 1) return false;
-    
-    // Verifica posições válidas
-    for (int i = 0; i < snake1.length; i++) {
-        if (!isValidPosition(snake1.body[i])) return false;
-    }
-    
-    // Verifica consistência de power-ups
-    int activePowerUps = 0;
-    for (int i = 0; i < MAX_POWERUPS; i++) {
-        if (snake1.activePowerUps[i].active) {
-            activePowerUps++;
-            if (snake1.activePowerUps[i].endTime < time(NULL)) {
-                // Power-up expirado não deveria estar ativo
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
-
-bool isValidPosition(Coordinate pos) {
-    return pos.x >= 1 && pos.x <= WIDTH && 
-           pos.y >= 1 && pos.y <= HEIGHT;
-}
-```
-
----
-
-## Extensibilidade e Manutenção
-
-### Arquitetura para Extensões
-
-#### Sistema de Modos Plugável
-```c
-typedef struct {
-    char name[32];
-    void (*init)(void);
-    void (*update)(void);
-    void (*cleanup)(void);
-    bool (*isGameOver)(void);
-} GameMode;
-
-GameMode gameModes[] = {
-    {"Traditional", initTraditional, updateTraditional, cleanupTraditional, isGameOverTraditional},
-    {"Time Mode", initTimeMode, updateTimeMode, cleanupTimeMode, isGameOverTimeMode},
-    {"Inverse", initInverse, updateInverse, cleanupInverse, isGameOverInverse},
-    {"Multiplayer", initMultiplayer, updateMultiplayer, cleanupMultiplayer, isGameOverMultiplayer}
-};
-
-void runGameMode(int modeIndex) {
-    GameMode* mode = &gameModes[modeIndex];
-    mode->init();
-    
-    while (!mode->isGameOver()) {
-        draw();
-        input();
-        mode->update();
-        Sleep(calculateFrameDelay());
-    }
-    
-    mode->cleanup();
-}
-```
-
-#### Sistema de Power-ups Extensível
-```c
-typedef struct {
-    char name[16];
-    char displayChar;
-    void (*onActivate)(Snake* snake);
-    void (*onUpdate)(Snake* snake);
-    void (*onDeactivate)(Snake* snake);
-    int duration;
-} PowerUpType;
-
-PowerUpType powerUpTypes[] = {
-    {"Turbo", 'T', activateTurbo, updateTurbo, deactivateTurbo, 10},
-    {"Slow Motion", 'S', activateSlowMotion, updateSlowMotion, deactivateSlowMotion, 10},
-    {"Immunity", 'I', activateImmunity, updateImmunity, deactivateImmunity, 10},
-    {"Double Points", 'D', activateDoublePoints, updateDoublePoints, deactivateDoublePoints, 10},
-    // Facilmente extensível
-    {"Phase Walk", 'P', activatePhaseWalk, updatePhaseWalk, deactivatePhaseWalk, 5},
-    {"Magnet", 'M', activateMagnet, updateMagnet, deactivateMagnet, 15}
-};
-```
-
-### Sugestões de Melhorias
-
-#### 1. Sistema de Configuração
-```c
-typedef struct {
-    int width, height;
-    int maxSnakeLength;
-    int baseSpeed;
-    bool soundEnabled;
-    char playerName[32];
-} GameConfig;
-
-GameConfig loadConfig(const char* filename);
-void saveConfig(const char* filename, GameConfig* config);
-```
-
-#### 2. Sistema de Alto Score
-```c
-typedef struct {
-    char playerName[32];
-    int score;
-    int gameMode;
-    time_t timestamp;
-} HighScore;
-
-void saveHighScore(HighScore* score);
-HighScore* loadHighScores(int* count);
-void displayLeaderboard();
-```
-
-#### 3. Sistema de Som (Proposta)
-```c
-// Usando Windows API
-void playSound(const char* soundName) {
-    char filename[64];
-    sprintf(filename, "sounds/%s.wav", soundName);
-    PlaySound(filename, NULL, SND_FILENAME | SND_ASYNC);
-}
-
-// Chamadas no jogo
-playSound("eat");      // Ao comer comida
-playSound("powerup");  // Ao pegar power-up
-playSound("gameover"); // Ao morrer
-```
-
-#### 4. Melhorias Visuais
-```c
-// Cores usando ANSI escape codes
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_BLUE    "\x1b[34m"
-#define COLOR_RESET   "\x1b[0m"
-
-void printColored(const char* text, const char* color) {
-    printf("%s%s%s", color, text, COLOR_RESET);
-}
-```
-
----
+## Função Principal
+
+### 1. `int main()`
+
+**Propósito**: Ponto de entrada e loop de controle geral.
+
+**Fluxo**:
+1. **Loop Infinito**: Mantém programa ativo
+2. **Exibição de Menu**: Mostra opções disponíveis
+3. **Seleção de Modo**: Processa escolha do usuário
+4. **Configuração**: Define power-ups se aplicável
+5. **Execução**: Chama executar_jogo()
+6. **Retorno**: Volta ao menu após cada partida
+
+**Modos de Jogo**:
+- **Caso 1-4**: Define modo correspondente e executa
+- **Caso 5**: Encerra programa
+- **Padrão**: Trata opção inválida
+
+## Modos de Jogo Detalhados
+
+### Modo 1: Tradicional
+- Jogo clássico sem limite de tempo
+- Velocidade aumenta com o nível
+- Termina apenas com colisão
+
+### Modo 2: Tempo
+- Duração fixa de 60 segundos
+- Objetivo: máxima pontuação no tempo
+- Termina automaticamente ao fim do tempo
+
+### Modo 3: Inverso  
+- Controles invertidos
+- Aumenta dificuldade significativamente
+- Todas as outras regras iguais ao tradicional
+
+### Modo 4: Multiplayer
+- Duas cobras simultâneas
+- Cobra1: Setas do teclado
+- Cobra2: Teclas WASD
+- Termina se qualquer cobra colidir
+
+## Considerações Técnicas
+
+### Dependências de Plataforma
+- **Windows Específico**: Uso extensivo da API Windows
+- **conio.h**: Biblioteca não-padrão para controle de console
+- **Portabilidade**: Código não portável para outros sistemas
+
+### Gerenciamento de Memória
+- **Estruturas Estáticas**: Todos os arrays têm tamanho fixo
+- **Sem Alocação Dinâmica**: Não usa malloc/free
+- **Segurança**: Sem riscos de vazamento de memória
+
+### Performance
+- **Sleep()**: Controla framerate do jogo
+- **Renderização Completa**: Redesenha tela inteira a cada frame
+- **Otimização**: Possível otimizar com renderização diferencial
+
+### Limitações
+- **Tamanho Fixo**: Campo e cobra limitados pelas constantes
+- **Power-ups Limitados**: Máximo de 5 simultâneos
+- **Console**: Interface limitada pelas capacidades do console
+
+## Possíveis Melhorias
+
+1. **Portabilidade**: Abstração da camada de sistema
+2. **Otimização**: Renderização apenas de mudanças
+3. **Configurabilidade**: Parâmetros ajustáveis via arquivo
+4. **Persistência**: Sistema de save/load e high scores
+5. **Audio**: Efeitos sonoros e música
+6. **IA**: Modo single-player com IA controlando segunda cobra
+7. **Rede**: Multiplayer via rede local/internet
 
 ## Conclusão
 
-Este jogo da cobra representa uma implementação avançada que vai muito além do conceito básico. A arquitetura modular, sistema de power-ups, múltiplos modos de jogo e tratamento robusto de estados demonstram princípios sólidos de engenharia de software.
+O NeoSnake3 representa uma implementação robusta e feature-rich do clássico Snake, demonstrando uso avançado de estruturas de dados em C, manipulação de console Windows, e design de arquitetura de jogos. O código é bem estruturado, com separação clara de responsabilidades e sistema modular que facilita manutenção e extensão.
