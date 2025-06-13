@@ -1,8 +1,8 @@
-# Documentação Técnica - NeoSnake3
+# Documentação Técnica - neoSnake
 
 ## Visão Geral
 
-O **NeoSnake3** é uma implementação avançada do clássico jogo Snake (Jogo da Cobrinha) desenvolvida em C para sistemas Windows. O jogo oferece múltiplos modos de jogo, sistema de power-ups, multiplayer local e interface gráfica baseada em console com controles avançados.
+O **neoSnake** é uma implementação avançada do clássico jogo Snake (Jogo da Cobrinha) desenvolvida em C para sistemas Windows. O jogo oferece múltiplos modos de jogo, sistema de power-ups, multiplayer local e interface gráfica baseada em console com controles avançados.
 
 ## Arquitetura do Sistema
 
@@ -530,4 +530,4 @@ if (velocidade < 50) velocidade = 50;  // Velocidade mínima
 
 ## Conclusão
 
-O NeoSnake3 representa uma implementação robusta e feature-rich do clássico Snake, demonstrando uso avançado de estruturas de dados em C, manipulação de console Windows, e design de arquitetura de jogos. O código é bem estruturado, com separação clara de responsabilidades e sistema modular que facilita manutenção e extensão.
+O neoSnake representa uma implementação robusta e feature-rich do clássico Snake, demonstrando uso avançado de estruturas de dados em C, manipulação de console Windows, e design de arquitetura de jogos. O código é bem estruturado, com separação clara de responsabilidades e sistema modular que facilita manutenção e extensão.

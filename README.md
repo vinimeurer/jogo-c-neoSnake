@@ -1,8 +1,8 @@
-# NeoSnake3 - Guia do Jogador
+# neoSnake - Guia do Jogador
 
-## O que é o NeoSnake3?
+## O que é o neoSnake?
 
-O **NeoSnake3** é uma versão moderna e aprimorada do clássico jogo da cobrinha que você conhece e ama! Desenvolvido especialmente para Windows, este jogo traz inovações incríveis que transformam a experiência tradicional em algo muito mais dinâmico e divertido.
+O **neoSnake** é uma versão moderna e aprimorada do clássico jogo da cobrinha que você conhece e ama! Desenvolvido especialmente para Windows, este jogo traz inovações incríveis que transformam a experiência tradicional em algo muito mais dinâmico e divertido.
 
 ## Como Jogar
 
@@ -38,7 +38,7 @@ Vocês precisam colaborar e se coordenar para coletar frutas e power-ups sem que
 
 ## Sistema de Power-ups
 
-Uma das grandes inovações do NeoSnake3 são os **power-ups** que aparecem aleatoriamente pelo campo durante o jogo. Cada um tem um efeito especial temporário:
+Uma das grandes inovações do neoSnake são os **power-ups** que aparecem aleatoriamente pelo campo durante o jogo. Cada um tem um efeito especial temporário:
 
 ### 🚀 Turbo (T)
 Sua cobra fica **super rápida** por alguns segundos! Ótimo para escapar de situações perigosas ou coletar frutas rapidamente.
@@ -107,4 +107,4 @@ Cada modo oferece uma experiência completamente diferente, garantindo que o jog
 
 ---
 
-**Divirta-se jogando NeoSnake3 e desafie seus amigos para ver quem consegue a maior pontuação!** 🏆
+**Divirta-se jogando neoSnake e desafie seus amigos para ver quem consegue a maior pontuação!** 🏆

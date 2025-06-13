@@ -436,7 +436,7 @@ void mostrar_menu_principal() {
     limpar_tela();
     printf("\n");
     printf("  #######################################\n");
-    printf("  #            JOGO DA COBRINHA         #\n");
+    printf("  #               NEOSNAKE              #\n");
     printf("  #######################################\n");
     printf("  #                                     #\n");
     printf("  #  1. Modo Tradicional                #\n");
